@@ -18,7 +18,7 @@
 ## 下载
 
 获取到cookies后，可以通过命令行传参或者传文件两种形式。
-`python3 main.py https://wenku.baidu.com/view/abcd.html -c "kunlunFlag=1; PSTM=1638106870;"`
+`python3 main.py https://wenku.baidu.com/view/abcd.html -c "kunlunFlag=1; PSTM=1638106870;..."`
 `python3 main.py https://wenku.baidu.com/view/abcd.html -C Cookies.txt`
 
 ## 进阶用法
