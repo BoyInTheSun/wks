@@ -10,10 +10,12 @@ import sys
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
-    description='''WKS v0.1 \nBaidu Wenku Spider BY BoyInTheSun\nDo NOT use it to download VIP documents or for commercial purpose! \nONLY FOR Easy to view and exchange spider technical.'''
+    description='''WKS v0.1 \nBaidu Wenku Spider BY BoyInTheSun\nDo NOT use it to download VIP documents or for commercial purpose! \nONLY FOR Easy to view and communicate spider technical.'''
 )
 parser.add_argument(
-    'url', 
+    'url',
+    nargs='?',
+    default=None,
     help='A url of baiduwenku, seem like "https://wenku.baidu.com/view/abcd.html"'
 )
 parser.add_argument(
@@ -25,8 +27,16 @@ parser.add_argument(
     help='filename of the cookies.'
 )
 parser.add_argument(
+    '-o', '--output', 
+    help='Output filename.'
+)
+parser.add_argument(
     '-u', '--useragent', 
     help='User-Agent when request.'
+)
+parser.add_argument(
+    '-F', '--filename', 
+    help='URLs in a file. One URL each line.'
 )
 
 args = parser.parse_args()
@@ -39,11 +49,18 @@ elif args.cookies_filename:
 useragent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
 if args.useragent:
     useragent = args.useragent
-url = args.url
-print('Download from', url)
+if args.url:
+    urls = [args.url]
+elif args.filename:
+    with open(args.filename) as f:
+        urls = f.read().split('\n')
+else:
+    parser.parse_args(['-h'])
 
-print('Download HTML...', end='')
-try:
+for url in urls:
+    print('Download from', url)
+
+    print('Download HTML...', end='')
     headers = {
         'User-Agent': useragent,
         'Cookie': cookies,
@@ -52,37 +69,24 @@ try:
     request = urllib.request.Request(url=url, headers=headers)
     page = urllib.request.urlopen(request)
     html = page.read().decode("utf-8")
-except Exception as e:
-    print('Error!')
-    print(traceback.print_exc())
-    sys.exit() 
 
-print('Success. \nParse HTML...', end='')
-try:
+
+    print('Success. \nParse HTML...', end='')
     page_data = re.search( r'var pageData = (.*);', html)
     title = re.search( r'<title>(.*) - 百度文库</title>', html).group(1)
     data = json.loads(page_data.group(1))
-except Exception as e:
-    print('Error!')
-    print(traceback.print_exc())
-    sys.exit() 
+ 
 
-print('Success. ')
-print('title: ', title)
-if isinstance(data['readerInfo']['htmlUrls'], list):
-    print('Found PPT file, prepare for downloading...', end='')
-    try:
-        temp_dir = url.split('/')[-1][:-5]
+    print('Success. ')
+    print('title: ', title)
+    if isinstance(data['readerInfo']['htmlUrls'], list):
+        print('Found PPT file, prepare for downloading...', end='')
+        temp_dir = url.split('?')[0].split('/')[-1][:-5]
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
         os.mkdir(temp_dir)
-    except Exception as e:
-        print('Error!')
-        print(traceback.print_exc())
-        sys.exit() 
-    
-    print('Success.\nstart downloading images...', end='')
-    try:
+        
+        print('Success.\nstart downloading images...', end='')
         imgs = data['readerInfo']['htmlUrls']
         if len(imgs) == 3:
             print("It seems that you provided incorrect cookies, only be able to download a part (3 page) of the file.")
@@ -92,27 +96,22 @@ if isinstance(data['readerInfo']['htmlUrls'], list):
             print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int((100 - percentage) // 2), i + 1, len(imgs), percentage), end='')
             request = urllib.request.Request(url=imgs[i], headers=headers)
             page = urllib.request.urlopen(request)
-            with open(os.path.join(url.split('/')[-1][:-5], str(i) + '.jpg'), 'wb') as f:
+            with open(os.path.join(temp_dir, str(i) + '.jpg'), 'wb') as f:
                 f.write(page.read())
-    except Exception as e:
-        print('Error!')
-        print(traceback.print_exc())
-        sys.exit() 
 
-    print('merge images to a PDF...', end='')
-    try:
+        print('\nmerge images to a PDF...', end='')
         imgs = [os.path.join(temp_dir, img) for img in os.listdir(temp_dir)]
-        with open(title + '.pdf', 'wb') as f:
+        if args.output:
+            output = args.output
+        else:
+            output = title
+        with open(output + '.pdf', 'wb') as f:
             f.write(img2pdf.convert(imgs))
         shutil.rmtree(temp_dir)
-    except Exception as e:
-        print('Error!')
-        print(traceback.print_exc())
-        sys.exit() 
-    
-    print('Success.')
-    print('Saved to ' + title + '.pdf')
+        
+        print('Success.')
+        print('Saved to ' + title + '.pdf')
 
-else:
-    print('Do NOT suppose this document now.')
+    else:
+        print('Do NOT support this document now.')
 
