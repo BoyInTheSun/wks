@@ -3,7 +3,7 @@ import urllib.request
 import json
 import argparse
 import os
-import img2pdf
+import img2pdf  # pip install img2pdf
 import shutil
 import time
 import gzip
@@ -133,7 +133,7 @@ for url in urls:
         print('Success.')
         print('Saved to ' + output + '.pdf')
 
-    # PDF
+    # PDF WORD (EXCEL)
     elif data['readerInfo']['tplKey'] == 'html_view' and filetype in ['word', 'pdf', 'excel']:
         print('Found {} file, prepare for downloading...'.format(filetype), end='')
         jsons = {x['pageIndex']: x['pageLoadUrl'] for x in data['readerInfo']['htmlUrls']['json']}
@@ -173,6 +173,7 @@ for url in urls:
             shutil.rmtree(temp_dir)
             print('Do NOT support to save into one file. Use "-t" to save temporary files.')
 
+    # TXT
     elif data['readerInfo']['tplKey'] == 'txt_view' and filetype == 'txt':
         print('Found txt file, parse text from HTML...', end='')
         lines = re.findall(r'<p class="p-txt">(.*)</p>', html)

@@ -11,7 +11,7 @@
 
 目前该项目仅支持ppt和txt格式文档下载。ppt仅能下载图片格式，建议下载后通过Acrobot等光学识别软件拷贝文字。
 
-其他格式暂不支持保存为单一文件，未来将支持保存为pdf，心情好再写。
+其他格式暂不支持保存为单一文件，可以带参数`-t`保存临时文件。未来将支持保存为pdf，心情好再写。
 
 原理为下载网页中显示的内容，故需会员的部分无法查看，且下载的并非原始文档，而是网页显示的内容。
 
@@ -29,4 +29,30 @@
 
 ### 进阶用法
 
-有空再写，可以`-h`查看。
+#### -h, --help
+
+显示帮助信息并退出。
+
+#### -c COOKIES, --cookies COOKIES
+
+传入cookie格式字符串，使请求带cookie。
+
+#### -C COOKIES_FILENAME, --cookies_filename COOKIES_FILENAME
+
+传入cookie文件，使请求带cookie。优先级低于前者。
+
+#### -t, --temp
+
+将临时文件保存到文件夹。
+
+#### -o OUTPUT, --output OUTPUT
+
+指定文件名（后缀名自动生成）
+
+#### -u USERAGENT, --useragent USERAGENT
+
+指定请求时User-Agent。
+
+#### -F FILENAME, --filename FILENAME
+
+批量下载。传入文件名，文件中一行一个链接。
