@@ -2,6 +2,8 @@
 
 百度文库爬虫  Baidu Wenku Spider
 
+仅支持python3
+
 ## 郑重声明
 
 请勿将该脚本用于下载付费文档或商业用途，否则后果自负！
@@ -9,11 +11,42 @@
 
 ## 使用教程
 
-目前该项目仅支持ppt和txt格式文档下载。ppt仅能下载图片格式，建议下载后通过Acrobot等光学识别软件拷贝文字。
+目前该项目支持所有格式文档下载。
 
-其他格式暂不支持保存为单一文件，可以带参数`-t`保存临时文件。未来将支持保存为pdf，心情好再写。
+ppt仅能保存图片格式的pdf，建议下载后通过Acrobot等光学识别软件拷贝文字；
 
-原理为下载网页中显示的内容，故需会员的部分无法查看，且下载的并非原始文档，而是网页显示的内容。
+doc、pdf文件仅能保存为pdf，且可能看起来会有一些不同；
+
+xls文件仅能保存为pdf，为了可能会支持保存为xls；
+
+txt可保存为原始格式。
+
+如果需要提取图片或查看原始数据，可以带参数`-t`保存临时文件。
+
+原理为下载网页中显示的内容，故网页版无法查看的部分无法下载，且下载的并非原始文档，只能尽力还原格式。
+
+### 安装wks
+
+#### 方法一：使用源码
+
+下载源码并安装依赖
+
+```powershell
+git clone https://github.com/BoyInTheSun/wks
+cd wks
+pip install -r requirements.txt
+python main.py --help
+```
+
+#### 方法二：使用可执行程序
+
+请下载对应系统版本的可执行程序。
+
+[点击跳转](https://github.com/BoyInTheSun/wks/releases)
+
+在windows系统中，选择你喜欢的地方，将`wks.exe`放到其中，按住shift右键，选择`在此处打开powershell窗口`，输入`.\wks.exe --help`查看帮助。
+
+不要直接双击`wks.exe`！！！
 
 ### 获取cookies
 
@@ -23,9 +56,9 @@
 
 获取到cookies后，可以通过命令行传参或者传文件两种形式。
 
-`python3 main.py https://wenku.baidu.com/view/abcd.html -c "kunlunFlag=1; PSTM=1638106870;..."`
+`.\wks.exe https://wenku.baidu.com/view/abcd.html -c "kunlunFlag=1; PSTM=1638106870;..."`
 
-`python3 main.py https://wenku.baidu.com/view/abcd.html -C Cookies.txt`
+`.\wks.exe https://wenku.baidu.com/view/abcd.html -C Cookies.txt`
 
 ### 进阶用法
 
