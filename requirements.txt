@@ -1,4 +1,3 @@
 img2pdf
 PyPDF2
 reportlab
-gzip
