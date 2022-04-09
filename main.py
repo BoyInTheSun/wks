@@ -155,7 +155,10 @@ for url in urls:
             percentage = i / len(fonts_csss) * 100
             print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), i, len(fonts_csss), percentage), end='')
             request = urllib.request.Request(url=fonts_csss[i], headers=headers)
-            page = urllib.request.urlopen(request)
+            try:
+                page = urllib.request.urlopen(request)
+            except:
+                continue
             raw = gzip.decompress(page.read()).decode('utf-8')
             temp = re.findall( r'@font-face {src: url\(data:font/opentype;base64,(.*?)\)format\(\'truetype\'\);font-family: \'(.*?)\';', raw)
             for each in temp:
@@ -169,7 +172,10 @@ for url in urls:
             percentage = i / len(jsons) * 100
             print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), i, len(jsons), percentage), end='')
             request = urllib.request.Request(url=jsons[i], headers=headers)
-            page = urllib.request.urlopen(request)
+            try:
+                page = urllib.request.urlopen(request)
+            except:
+                continue
             with open(os.path.join(temp_dir, str(i) + '.json'), 'w') as f:
                 temp = re.search( r'wenku_[0-9]+\((.*)\)', page.read().decode('utf-8', 'ignore')).group(1)
                 f.write(temp)
@@ -181,7 +187,10 @@ for url in urls:
             percentage = i / len(pngs) * 100
             print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), i, len(pngs), percentage), end='')
             request = urllib.request.Request(url=pngs[i], headers=headers)
-            page = urllib.request.urlopen(request)
+            try:
+                page = urllib.request.urlopen(request)
+            except:
+                continue
             with open(os.path.join(temp_dir, str(i) + '.png'), 'wb') as f:
                 f.write(page.read())
 
