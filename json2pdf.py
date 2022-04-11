@@ -83,14 +83,25 @@ def save_pdf(tempdir, pagenum):
             new_image = img.crop((
                 int(item['c']['ix']), 
                 int(item['c']['iy']),
-                int(item['c']['iw']) + int(item['c']['ix']), 
-                int(item['c']['ih'] + int(item['c']['iy']))
+                int(item['c']['iw'] + item['c']['ix']), 
+                int(item['c']['ih'] + item['c']['iy'])
             ))
+            img_width = None
+            img_height = None
             if int(item['c']['iw']) != int(item['p']['w']) or int(item['c']['ih']) != int(item['p']['h']):
-                new_image = new_image.resize((int(item['p']['w']), int(item['p']['h'])))
+                img_width = item['p']['w']
+                img_height = item['c']['ih'] / item['c']['iw'] * item['p']['w']
             new_image.save(os.path.join(tempdir, str(pagenum), '{}-{}.png'.format(item['p']['x'], item['p']['y'])))
             # c.drawImage(ImageReader(new_image), int(item['p']['x']), data['page']['ph'] - int(item['p']['y']) - int(item['c']['ih']), mask='auto') 
-            c.drawImage(os.path.join(tempdir, str(pagenum), '{}-{}.png'.format(item['p']['x'], item['p']['y'])), int(item['p']['x']), data['page']['ph'] - int(item['p']['y']) - int(item['c']['ih']), mask='auto') 
+            c.drawImage(
+                os.path.join(tempdir, str(pagenum), 
+                '{}-{}.png'.format(item['p']['x'], item['p']['y'])), 
+                int(item['p']['x']), 
+                data['page']['ph'] - int(item['p']['y']) - img_height if img_height else int(item['c']['ih']), 
+                width=img_width,
+                height=img_height,
+                mask='auto'
+            ) 
 
     c.showPage()
     c.save()
