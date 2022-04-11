@@ -3,13 +3,16 @@ import urllib.request
 import json
 import argparse
 import os
-import img2pdf  # pip install img2pdf
 import shutil
 import time
 import gzip
 import base64
-from json2pdf import save_pdf  # local
+
+import img2pdf  # pip install img2pdf
 from PyPDF2 import PdfFileMerger, PdfFileReader  # pip3 install PyPDF2
+
+from json2pdf import save_pdf  # local
+import my_tools # local
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -37,6 +40,10 @@ parser.add_argument(
 parser.add_argument(
     '-o', '--output', 
     help='Output filename.'
+)
+parser.add_argument(
+    '-p', '--pagenums', 
+    help='For example, "2,6-8,10" means page numbers [2,6,7,8,10], start by 1'
 )
 parser.add_argument(
     '-u', '--useragent', 
@@ -109,7 +116,6 @@ for url in urls:
     print('Success. ')
     print('title: ', title)
 
-
     # PPT
     if data['readerInfo']['tplKey'] == 'new_view' and filetype == 'ppt':
         print('Found ppt file, prepare for download...', end='')
@@ -118,18 +124,30 @@ for url in urls:
         imgs = data['readerInfo']['htmlUrls']
         if data['readerInfo']['page'] > len(imgs):
             print("It seems that you provided incorrect or Non-VIP cookies, only be able to download a part of the file ({} page), not the whole file ({} page).".format(len(imgs), data['readerInfo']['page']))
-        for i in range(len(imgs)):
+        if args.pagenums:
+            pagenums = my_tools.parse_pagenum(args.pagenums)
+            pagenums = my_tools.under_by(pagenums, len(imgs))
+        else:
+            pagenums = list(range(1, len(imgs) + 1))
+        print('page: ', my_tools.export_pagenum(pagenums))
+        
+        for i in range(len(pagenums)):
             # TODO: theading
-            percentage = (i + 1) / len(imgs) * 100
-            print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int((100 - percentage) // 2), i + 1, len(imgs), percentage), end='')
-            request = urllib.request.Request(url=imgs[i], headers=headers)
+            percentage = (i + 1) / len(pagenums) * 100
+            print('\r|{}| {} / {} ({:.2f}%)'.format(
+                '=' * int(percentage // 2 - 1) + '>' + '-' * int((100 - percentage) // 2), 
+                i + 1, 
+                len(pagenums), 
+                percentage
+            ), end='')
+            request = urllib.request.Request(url=imgs[pagenums[i] - 1], headers=headers)
             page = urllib.request.urlopen(request)
-            with open(os.path.join(temp_dir, str(i) + '.jpg'), 'wb') as f:
+            with open(os.path.join(temp_dir, str(pagenums[i]) + '.jpg'), 'wb') as f:
                 f.write(page.read())
 
         print('\nMerge images to a PDF...', end='')
         # imgs = [os.path.join(temp_dir, img) for img in os.listdir(temp_dir) if img[-4:] == '.jpg']
-        file_imgs = [os.path.join(temp_dir, str(i) + '.jpg') for i in range(len(imgs))]
+        file_imgs = [os.path.join(temp_dir, str(i) + '.jpg') for i in pagenums]
         
         with open(output + '.pdf', 'wb') as f:
             f.write(img2pdf.convert(file_imgs))
@@ -150,11 +168,23 @@ for url in urls:
         if data['readerInfo']['page'] > len(jsons):
             print("It seems that you provided incorrect or Non-VIP cookies, only be able to download a part of the file ({} page), not the whole file ({} page).".format(len(jsons), data['readerInfo']['page']))
         
+        if args.pagenums:
+            pagenums = my_tools.parse_pagenum(args.pagenums)
+            pagenums = my_tools.under_by(pagenums, len(jsons))
+        else:
+            pagenums = list(range(1, len(jsons) + 1))
+        print('page: ', my_tools.export_pagenum(pagenums))
+
         print('Start downloading font(s)...')
-        for i in fonts_csss:
-            percentage = i / len(fonts_csss) * 100
-            print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), i, len(fonts_csss), percentage), end='')
-            request = urllib.request.Request(url=fonts_csss[i], headers=headers)
+        for i in range(len(pagenums)):
+            percentage = (i + 1) / len(pagenums) * 100
+            print('\r|{}| {} / {} ({:.2f}%)'.format(
+                '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
+                i + 1, 
+                len(pagenums), 
+                percentage
+            ), end='')
+            request = urllib.request.Request(url=fonts_csss[pagenums[i]], headers=headers)
             try:
                 page = urllib.request.urlopen(request)
             except:
@@ -167,48 +197,65 @@ for url in urls:
 
         print()
         print('Start downloading json(s)...')
-        for i in jsons:
+        for i in range(len(pagenums)):
             # TODO: theading
-            percentage = i / len(jsons) * 100
-            print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), i, len(jsons), percentage), end='')
-            request = urllib.request.Request(url=jsons[i], headers=headers)
+            percentage = (i + 1) / len(pagenums) * 100
+            print('\r|{}| {} / {} ({:.2f}%)'.format(
+                '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
+                i + 1, 
+                len(pagenums), 
+                percentage
+            ), end='')
+            request = urllib.request.Request(url=jsons[pagenums[i]], headers=headers)
             try:
                 page = urllib.request.urlopen(request)
             except:
                 continue
-            with open(os.path.join(temp_dir, str(i) + '.json'), 'w') as f:
+            with open(os.path.join(temp_dir, str(pagenums[i]) + '.json'), 'w') as f:
                 temp = re.search( r'wenku_[0-9]+\((.*)\)', page.read().decode('utf-8', 'ignore')).group(1)
                 f.write(temp)
 
         print()
         print('Start downloading png(s)...')
-        for i in pngs:
+        for i in range(len(pagenums)):
             # TODO: theading
-            percentage = i / len(pngs) * 100
-            print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), i, len(pngs), percentage), end='')
-            request = urllib.request.Request(url=pngs[i], headers=headers)
+            percentage = (i + 1) / len(pagenums) * 100
+            print('\r|{}| {} / {} ({:.2f}%)'.format(
+                '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
+                i + 1, 
+                len(pagenums), 
+                percentage
+            ), end='')
+            if not pngs.get(pagenums[i]):
+                continue
+            request = urllib.request.Request(url=pngs[pagenums[i]], headers=headers)
             try:
                 page = urllib.request.urlopen(request)
             except:
                 continue
-            with open(os.path.join(temp_dir, str(i) + '.png'), 'wb') as f:
+            with open(os.path.join(temp_dir, str(pagenums[i]) + '.png'), 'wb') as f:
                 f.write(page.read())
 
         print()
         print('Start generating pdf...')
         # jsons is right!
-        for i in jsons:
+        for i in range(len(pagenums)):
             # TODO: theading
-            percentage = i / len(jsons) * 100
-            print('\r|{}| {} / {} ({:.2f}%)'.format('=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), i, len(jsons), percentage), end='')
-            save_pdf(temp_dir, i)
+            percentage = (i + 1) / len(pagenums) * 100
+            print('\r|{}| {} / {} ({:.2f}%)'.format(
+                '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
+                i + 1, 
+                len(pagenums), 
+                percentage
+            ), end='')
+            save_pdf(temp_dir, pagenums[i])
 
         print()
         print('Start merging pdf...', end='')
         pdfs = {x[:-4]: os.path.join(temp_dir, x) for x in os.listdir(temp_dir) if x[-4:] == '.pdf'}
         file_merger = PdfFileMerger()
-        for i in range(len(pdfs)):
-            with open(pdfs[str(i + 1)], 'rb') as f_pdf:
+        for i in pagenums:
+            with open(pdfs[str(i)], 'rb') as f_pdf:
                 file_merger.append(PdfFileReader(f_pdf))
         file_merger.write(output + '.pdf')
 
@@ -223,7 +270,10 @@ for url in urls:
         print('Found txt file, parse text from HTML...', end='')
         lines = re.findall(r'<p class="p-txt">(.*)</p>', html)
 
-        print('Success.\nDownload other(s) text...', end='')
+        print('Success.')
+        if args.pagenums:
+            print('Do not support argument "-p" or "--pagenums".')
+        print('Download other(s) text...', end='')
         temp_dir = url.split('?')[0].split('/')[-1][:-5]
         request = urllib.request.Request(
             url='https://wkretype.bdimg.com/retype/text/' + temp_dir + data['readerInfo']['md5sum'] + "&pn=2&rn=" + str(int(data['viewBiz']['docInfo']['page']) - 1) + '&type=txt&rsign=' + data['readerInfo']['rsign'] + '&callback=cb&_=' + str(int(time.time())), 

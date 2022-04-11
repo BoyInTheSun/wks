@@ -82,6 +82,10 @@ python main.py --help
 
 指定文件名（后缀名自动生成）
 
+#### -p PAGENUMS, --pagenums PAGENUMS
+
+指定下载和保存的页数，例如"2,6-8,10"代表下载页码"2,6,7,8,10"，从"1"开始。
+
 #### -u USERAGENT, --useragent USERAGENT
 
 指定请求时User-Agent。

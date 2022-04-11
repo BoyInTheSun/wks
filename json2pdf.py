@@ -25,10 +25,11 @@ def save_pdf(tempdir, pagenum):
                 styles[style_c][each] = style['s'][each]
 
     ttfs = [x for x in os.listdir(tempdir) if x[-4:] == '.ttf' and int(x[-8: -4], 16) == pagenum]
-    ttf2font = data['font']
+    # ttf2font = data['font']
     reload(pdfmetrics)  # TODO: a issue here, if no reload(), font only work in page 1.
     for ttf in ttfs:
-        pdfmetrics.registerFont(TTFont(ttf2font.get(ttf[:-4]), os.path.join(tempdir, ttf)))
+        # pdfmetrics.registerFont(TTFont(ttf2font.get(ttf[:-4]), os.path.join(tempdir, ttf)))
+        pdfmetrics.registerFont(TTFont(ttf[:-4], os.path.join(tempdir, ttf)))
     
     try:
         img = Image.open(os.path.join(tempdir, str(pagenum) +  '.png'))
@@ -60,7 +61,7 @@ def save_pdf(tempdir, pagenum):
             )
             if style.get('font-family'):
                 textobject.setFont(
-                    ttf2font.get(style['font-family']), 
+                    style['font-family'], 
                     float(style['font-size']) if style.get('font-size') else 16
                 )
             if style.get('letter-spacing'):
