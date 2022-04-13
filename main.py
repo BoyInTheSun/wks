@@ -165,6 +165,20 @@ for url in urls:
         fonts_csss = {x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + temp_dir + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data['readerInfo']['htmlUrls']['ttf']}  # temp_dir is doc ID in wenku.baidu.com
         print('Success.')
 
+        if data['readerInfo']['page'] > 100:
+            list_pn = list(range(101, data['readerInfo']['page'] + 1, 50))
+            for pn in list_pn:
+                url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=1&pn={}&t={}&isFromBdSearch=0&rn=50".format(temp_dir, temp_dir, pn, str(int(time.time())))
+                request = urllib.request.Request(
+                    url=url, 
+                    headers=headers
+                )
+                page = urllib.request.urlopen(request)
+                data_temp = json.loads(page.read().decode())['data']['htmlUrls']
+                jsons.update({x['pageIndex']: x['pageLoadUrl'] for x in data_temp['json']})
+                pngs.update({x['pageIndex']: x['pageLoadUrl'] for x in data_temp['png']})
+                fonts_csss.update({x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + temp_dir + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data_temp['ttf']})  # temp_dir is doc ID in wenku.baidu.com
+
         if data['readerInfo']['page'] > len(jsons):
             print("It seems that you provided incorrect or Non-VIP cookies, only be able to download a part of the file ({} page), not the whole file ({} page).".format(len(jsons), data['readerInfo']['page']))
         
