@@ -46,8 +46,11 @@ def save_pdf(tempdir, pagenum):
     for item in data_body:
         if item['t'] == 'word':
             style = dict()
-            for item_r in item['r']:
-                style.update(styles[item_r])
+            if item.get('r'):
+                for item_r in item['r']:
+                    style.update(styles[item_r])
+            if item.get('s'):
+                style.update(item['s'])
             text = item['c']
             # TODO: bold do not work
             '''
@@ -76,7 +79,10 @@ def save_pdf(tempdir, pagenum):
             textobject.textLine(text)
             c.drawText(textobject)
         elif item['t'] == 'pic':
-            # TODO: a issue here. follow code do not work.
+            # TODO: is that work?
+            if item['ps'].get('_drop') and item['ps'].get('_drop') == 1:
+                continue
+            # follow code do not work.
             # https://groups.google.com/g/reportlab-users/c/SmIzKYdCodo
             # new_image = Image.new('RGBA', (int(item['c']['iw']), int(item['c']['ih'])))
             # new_image.paste(img, (int(item['c']['ix']), int(item['c']['iy'])))
