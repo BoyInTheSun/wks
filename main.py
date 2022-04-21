@@ -78,8 +78,9 @@ else:
 
 
 for url in urls:
+    url = url.split('?')[0]
     print('Download from', url)
-
+    url = url + '?edtMode=2'  # support vip account
     print('Download HTML...', end='')
     headers = {
         'User-Agent': useragent,

@@ -1,5 +1,4 @@
 from http.client import NON_AUTHORITATIVE_INFORMATION
-from re import S
 
 
 def parse_pagenum(s):
