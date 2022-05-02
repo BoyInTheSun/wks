@@ -80,7 +80,7 @@ def save_pdf(tempdir, pagenum):
             c.drawText(textobject)
         elif item['t'] == 'pic':
             # TODO: is that work?
-            if item['ps'].get('_drop') and item['ps'].get('_drop') == 1:
+            if item['ps'] and item['ps'].get('_drop') and item['ps'].get('_drop') == 1:
                 continue
             # follow code do not work.
             # https://groups.google.com/g/reportlab-users/c/SmIzKYdCodo
