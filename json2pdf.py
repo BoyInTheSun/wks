@@ -51,6 +51,7 @@ def save_pdf(tempdir, pagenum):
                     style.update(styles[item_r])
             if item.get('s'):
                 style.update(item['s'])
+            
             text = item['c']
             # TODO: bold do not work
             '''
@@ -75,13 +76,13 @@ def save_pdf(tempdir, pagenum):
                     int(style['color'][3: 5], 16) / 255,
                     int(style['color'][5: 7], 16) / 255
                 )
-            textobject.setFillColorRGB(0,0,0)
             textobject.textLine(text)
             c.drawText(textobject)
         elif item['t'] == 'pic':
             # TODO: is that work?
-            if item['ps'] and item['ps'].get('_drop') and item['ps'].get('_drop') == 1:
-                continue
+            # if item['ps'] and item['ps'].get('_drop') and item['ps'].get('_drop') == 1:
+            #     continue
+
             # follow code do not work.
             # https://groups.google.com/g/reportlab-users/c/SmIzKYdCodo
             # new_image = Image.new('RGBA', (int(item['c']['iw']), int(item['c']['ih'])))
@@ -97,13 +98,19 @@ def save_pdf(tempdir, pagenum):
             if int(item['c']['iw']) != int(item['p']['w']) or int(item['c']['ih']) != int(item['p']['h']):
                 img_width = item['p']['w']
                 img_height = item['c']['ih'] / item['c']['iw'] * item['p']['w']
-            new_image.save(os.path.join(tempdir, str(pagenum), '{}-{}.png'.format(item['p']['x'], item['p']['y'])))
+            else:
+                img_height = int(item['c']['ih'])
+            pic_name = item['s'].get('pic_file').replace('/', '+') if item['s'] and item['s'].get('pic_file') else '{}-{}.png'.format(item['p']['x'], item['p']['y'])
+            new_image.save(os.path.join(tempdir, str(pagenum), pic_name))
             # c.drawImage(ImageReader(new_image), int(item['p']['x']), data['page']['ph'] - int(item['p']['y']) - int(item['c']['ih']), mask='auto') 
             c.drawImage(
-                os.path.join(tempdir, str(pagenum), 
-                '{}-{}.png'.format(item['p']['x'], item['p']['y'])), 
+                os.path.join(
+                    tempdir, 
+                    str(pagenum), 
+                    pic_name
+                ), 
                 int(item['p']['x']), 
-                data['page']['ph'] - int(item['p']['y']) - img_height if img_height else int(item['c']['ih']), 
+                data['page']['ph'] - int(item['p']['y']) - img_height, 
                 width=img_width,
                 height=img_height,
                 mask='auto'
