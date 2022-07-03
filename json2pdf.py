@@ -101,6 +101,8 @@ def save_pdf(tempdir, pagenum):
             else:
                 img_height = int(item['c']['ih'])
             pic_name = item['s'].get('pic_file').replace('/', '+') if item['s'] and item['s'].get('pic_file') else '{}-{}.png'.format(item['p']['x'], item['p']['y'])
+            if pic_name[-4:] != '.png':
+                pic_name = '.'.join(pic_name.split('.')[:-1]) + '.png'
             new_image.save(os.path.join(tempdir, str(pagenum), pic_name))
             # c.drawImage(ImageReader(new_image), int(item['p']['x']), data['page']['ph'] - int(item['p']['y']) - int(item['c']['ih']), mask='auto') 
             c.drawImage(
