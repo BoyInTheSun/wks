@@ -7,7 +7,7 @@ import os
 from PIL import Image
 from imp import reload
 
-def save_pdf(tempdir, pagenum):
+def save_pdf(tempdir, pagenum, font_replace=dict()):
 
     with open(os.path.join(tempdir, str(pagenum) + ".json")) as f:
         data = json.load(f)
@@ -64,9 +64,33 @@ def save_pdf(tempdir, pagenum):
                 data['page']['ph'] - item['p']['y'] - 14  # TODO: why is 14?
             )
             if style.get('font-family'):
+                if style['font-family'] + '.ttf' in ttfs:
+                    font_family = style['font-family']
+                elif style['font-family'] in font_replace:
+                    font_family = font_replace[style['font-family']]
+                else:
+                    if len(ttfs) == 1:
+                        font_replace[style['font-family']] = ttfs[0][:-4]
+                        font_family = font_replace[style['font-family']]
+                        print('Font "{}" missing, will be repalce by "{}" ({}.ttf)'.format(style.get('font-family'), data['font'].get(font_family), font_family))
+
+                    else:
+                        print('Font "{}" missing, will be repalce by one of other fonts'.format(style.get('font-family')))
+                        i = 1
+                        for each in data['font']:
+                            print('[{}] {} ({})'.format(i, data['font'][each], each + '.ttf'))
+                            i += 1
+                        num_font = input('please input the number:')
+                        try:
+                            font_new = list(data['font'].keys())[int(num_font) - 1]
+                        except:
+                            font_new = ttfs[0][:-4]
+                        font_replace[style['font-family']] = font_new
+                        font_family = font_replace[style['font-family']]
+                        print('Font "{}" missing, will be repalce by "{}" ({}.ttf)'.format(style.get('font-family'), data['font'].get(font_family), font_family))
                 textobject.setFont(
-                    style['font-family'], 
-                    float(style['font-size']) if style.get('font-size') else 16
+                    psfontname=font_family, 
+                    size=float(style['font-size']) if style.get('font-size') else 16
                 )
             if style.get('letter-spacing'):
                 textobject.setCharSpace(float(style['letter-spacing']))
@@ -120,3 +144,4 @@ def save_pdf(tempdir, pagenum):
 
     c.showPage()
     c.save()
+    return font_replace

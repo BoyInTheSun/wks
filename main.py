@@ -193,12 +193,6 @@ for url in urls:
         print('Start downloading font(s)...')
         for i in range(len(pagenums)):
             percentage = (i + 1) / len(pagenums) * 100
-            print('\r|{}| {} / {} ({:.2f}%)'.format(
-                '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
-                i + 1, 
-                len(pagenums), 
-                percentage
-            ), end='')
             request = urllib.request.Request(url=fonts_csss[pagenums[i]], headers=headers)
             try:
                 page = urllib.request.urlopen(request)
@@ -210,17 +204,16 @@ for url in urls:
                 with open(os.path.join(temp_dir, str(each[1]) + '.ttf'), 'wb') as f:
                     f.write(base64.b64decode(each[0]))
 
-        print()
-        print('Start downloading json(s)...')
-        for i in range(len(pagenums)):
-            # TODO: theading
-            percentage = (i + 1) / len(pagenums) * 100
             print('\r|{}| {} / {} ({:.2f}%)'.format(
                 '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
                 i + 1, 
                 len(pagenums), 
                 percentage
             ), end='')
+        print()
+        print('Start downloading json(s)...')
+        for i in range(len(pagenums)):
+            # TODO: theading
             request = urllib.request.Request(url=jsons[pagenums[i]], headers=headers)
             try:
                 page = urllib.request.urlopen(request)
@@ -229,11 +222,6 @@ for url in urls:
             with open(os.path.join(temp_dir, str(pagenums[i]) + '.json'), 'w') as f:
                 temp = re.search( r'wenku_[0-9]+\((.*)\)', page.read().decode('utf-8', 'ignore')).group(1)
                 f.write(temp)
-
-        print()
-        print('Start downloading png(s)...')
-        for i in range(len(pagenums)):
-            # TODO: theading
             percentage = (i + 1) / len(pagenums) * 100
             print('\r|{}| {} / {} ({:.2f}%)'.format(
                 '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
@@ -241,6 +229,11 @@ for url in urls:
                 len(pagenums), 
                 percentage
             ), end='')
+
+        print()
+        print('Start downloading png(s)...')
+        for i in range(len(pagenums)):
+            # TODO: theading
             if not pngs.get(pagenums[i]):
                 continue
             request = urllib.request.Request(url=pngs[pagenums[i]], headers=headers)
@@ -250,12 +243,6 @@ for url in urls:
                 continue
             with open(os.path.join(temp_dir, str(pagenums[i]) + '.png'), 'wb') as f:
                 f.write(page.read())
-
-        print()
-        print('Start generating pdf...')
-        # jsons is right!
-        for i in range(len(pagenums)):
-            # TODO: theading
             percentage = (i + 1) / len(pagenums) * 100
             print('\r|{}| {} / {} ({:.2f}%)'.format(
                 '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
@@ -263,7 +250,21 @@ for url in urls:
                 len(pagenums), 
                 percentage
             ), end='')
-            save_pdf(temp_dir, pagenums[i])
+
+        print()
+        print('Start generating pdf...')
+        # jsons is right!
+        font_replace = dict()
+        for i in range(len(pagenums)):
+            # TODO: theading
+            font_replace = save_pdf(temp_dir, pagenums[i], font_replace=font_replace)
+            percentage = (i + 1) / len(pagenums) * 100
+            print('\r|{}| {} / {} ({:.2f}%)'.format(
+                '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
+                i + 1, 
+                len(pagenums), 
+                percentage
+            ), end='')
 
         print()
         print('Start merging pdf...', end='')
