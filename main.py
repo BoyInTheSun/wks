@@ -76,17 +76,18 @@ elif args.filename:
 else:
     parser.parse_args(['-h'])
 
+headers = {
+    'User-Agent': useragent,
+    'Cookie': cookies,
+    'Referer': 'https://wenku.baidu.com/'
+}
 
 for url in urls:
     url = url.split('?')[0]
     print('Download from', url)
     url = url + '?edtMode=2'  # support vip account
     print('Download HTML...', end='')
-    headers = {
-        'User-Agent': useragent,
-        'Cookie': cookies,
-        'Referer': url
-    }
+    
     req = requests.get(url, headers=headers)
     html = req.text
 
@@ -164,10 +165,10 @@ for url in urls:
         fonts_csss = {x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + temp_dir + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data['readerInfo']['htmlUrls']['ttf']}  # temp_dir is doc ID in wenku.baidu.com
         print('Success.')
 
-        if data['readerInfo']['page'] > 100:
-            list_pn = list(range(101, data['readerInfo']['page'] + 1, 50))
+        if data['readerInfo']['page'] > 2:
+            list_pn = list(range(3, data['readerInfo']['page'] + 1, 50))
             for pn in list_pn:
-                url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=1&pn={}&t={}&isFromBdSearch=0&rn=50".format(temp_dir, temp_dir, pn, str(int(time.time())))
+                url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=1&pn={}&t={}&isFromBdSearch=00&srcRef=&rn=50&powerId=2&bizName=mainPc".format(temp_dir, temp_dir, pn, str(int(time.time())))
                 req = requests.get(
                     url, 
                     headers=headers
