@@ -8,8 +8,8 @@ import time
 import gzip
 import base64
 
-import img2pdf  # pip install img2pdf
-from PyPDF2 import PdfFileMerger, PdfFileReader  # pip3 install PyPDF2
+import img2pdf
+from PyPDF2 import PdfMerger, PdfReader
 
 from json2pdf import save_pdf  # local
 import my_tools # local
@@ -269,10 +269,10 @@ for url in urls:
         print()
         print('Start merging pdf...', end='')
         pdfs = {x[:-4]: os.path.join(temp_dir, x) for x in os.listdir(temp_dir) if x[-4:] == '.pdf'}
-        file_merger = PdfFileMerger()
+        file_merger = PdfMerger()
         for i in pagenums:
             with open(pdfs[str(i)], 'rb') as f_pdf:
-                file_merger.append(PdfFileReader(f_pdf))
+                file_merger.append(PdfReader(f_pdf))
         file_merger.write(output + '.pdf')
 
         print('Success.')
