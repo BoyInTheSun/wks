@@ -1,5 +1,5 @@
 import re
-import urllib.request
+import requests
 import json
 import argparse
 import os
@@ -87,9 +87,8 @@ for url in urls:
         'Cookie': cookies,
         'Referer': url
     }
-    request = urllib.request.Request(url=url, headers=headers)
-    page = urllib.request.urlopen(request)
-    html = page.read().decode("utf-8")
+    req = requests.get(url, headers=headers)
+    html = req.text
 
     temp_dir = url.split('?')[0].split('/')[-1][:-5]
     if os.path.exists(temp_dir):
@@ -141,10 +140,9 @@ for url in urls:
                 len(pagenums), 
                 percentage
             ), end='')
-            request = urllib.request.Request(url=imgs[pagenums[i] - 1], headers=headers)
-            page = urllib.request.urlopen(request)
+            req = requests.get(imgs[pagenums[i] - 1], headers=headers)
             with open(os.path.join(temp_dir, str(pagenums[i]) + '.jpg'), 'wb') as f:
-                f.write(page.read())
+                f.write(req.content)
 
         print('\nMerge images to a PDF...', end='')
         # imgs = [os.path.join(temp_dir, img) for img in os.listdir(temp_dir) if img[-4:] == '.jpg']
@@ -170,12 +168,11 @@ for url in urls:
             list_pn = list(range(101, data['readerInfo']['page'] + 1, 50))
             for pn in list_pn:
                 url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=1&pn={}&t={}&isFromBdSearch=0&rn=50".format(temp_dir, temp_dir, pn, str(int(time.time())))
-                request = urllib.request.Request(
-                    url=url, 
+                req = requests.get(
+                    url, 
                     headers=headers
                 )
-                page = urllib.request.urlopen(request)
-                data_temp = json.loads(page.read().decode())['data']['htmlUrls']
+                data_temp = json.loads(req.text)['data']['htmlUrls']
                 jsons.update({x['pageIndex']: x['pageLoadUrl'] for x in data_temp['json']})
                 pngs.update({x['pageIndex']: x['pageLoadUrl'] for x in data_temp['png']})
                 fonts_csss.update({x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + temp_dir + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data_temp['ttf']})  # temp_dir is doc ID in wenku.baidu.com
@@ -193,13 +190,9 @@ for url in urls:
         print('Start downloading font(s)...')
         for i in range(len(pagenums)):
             percentage = (i + 1) / len(pagenums) * 100
-            request = urllib.request.Request(url=fonts_csss[pagenums[i]], headers=headers)
-            try:
-                page = urllib.request.urlopen(request)
-            except:
-                continue
-            raw = gzip.decompress(page.read()).decode('utf-8')
-            temp = re.findall( r'@font-face {src: url\(data:font/opentype;base64,(.*?)\)format\(\'truetype\'\);font-family: \'(.*?)\';', raw)
+            req = requests.get(fonts_csss[pagenums[i]], headers=headers)
+            # status not 200?
+            temp = re.findall( r'@font-face {src: url\(data:font/opentype;base64,(.*?)\)format\(\'truetype\'\);font-family: \'(.*?)\';', req.text)
             for each in temp:
                 with open(os.path.join(temp_dir, str(each[1]) + '.ttf'), 'wb') as f:
                     f.write(base64.b64decode(each[0]))
@@ -214,13 +207,10 @@ for url in urls:
         print('Start downloading json(s)...')
         for i in range(len(pagenums)):
             # TODO: theading
-            request = urllib.request.Request(url=jsons[pagenums[i]], headers=headers)
-            try:
-                page = urllib.request.urlopen(request)
-            except:
-                continue
+            req = requests.get(jsons[pagenums[i]], headers=headers)
+            # status not 200?
             with open(os.path.join(temp_dir, str(pagenums[i]) + '.json'), 'w') as f:
-                temp = re.search( r'wenku_[0-9]+\((.*)\)', page.read().decode('utf-8', 'ignore')).group(1)
+                temp = re.search( r'wenku_[0-9]+\((.*)\)', req.text).group(1)
                 f.write(temp)
             percentage = (i + 1) / len(pagenums) * 100
             print('\r|{}| {} / {} ({:.2f}%)'.format(
@@ -236,13 +226,10 @@ for url in urls:
             # TODO: theading
             if not pngs.get(pagenums[i]):
                 continue
-            request = urllib.request.Request(url=pngs[pagenums[i]], headers=headers)
-            try:
-                page = urllib.request.urlopen(request)
-            except:
-                continue
+            req = requests.get(pngs[pagenums[i]], headers=headers)
+            # status not 200?
             with open(os.path.join(temp_dir, str(pagenums[i]) + '.png'), 'wb') as f:
-                f.write(page.read())
+                f.write(req.content)
             percentage = (i + 1) / len(pagenums) * 100
             print('\r|{}| {} / {} ({:.2f}%)'.format(
                 '=' * int(percentage // 2 - 1) + '>' + '-' * int(50 - percentage // 2), 
@@ -291,12 +278,11 @@ for url in urls:
             print('Do not support argument "-p" or "--pagenums".')
         print('Download other(s) text...', end='')
         temp_dir = url.split('?')[0].split('/')[-1][:-5]
-        request = urllib.request.Request(
-            url='https://wkretype.bdimg.com/retype/text/' + temp_dir + data['readerInfo']['md5sum'] + "&pn=2&rn=" + str(int(data['viewBiz']['docInfo']['page']) - 1) + '&type=txt&rsign=' + data['readerInfo']['rsign'] + '&callback=cb&_=' + str(int(time.time())), 
+        req = requests.get(
+            'https://wkretype.bdimg.com/retype/text/' + temp_dir + data['readerInfo']['md5sum'] + "&pn=2&rn=" + str(int(data['viewBiz']['docInfo']['page']) - 1) + '&type=txt&rsign=' + data['readerInfo']['rsign'] + '&callback=cb&_=' + str(int(time.time())), 
             headers=headers
         )
-        page = urllib.request.urlopen(request)
-        lines_others_json = json.loads(gzip.decompress(page.read())[3: -1])
+        lines_others_json = json.loads(req.text[3: -1])
         lines_others = [x['parags'][0]['c'][:-2] for x in lines_others_json]
         lines = [line for line in lines if line]
         lines[-1] = lines[-1][:-1]
