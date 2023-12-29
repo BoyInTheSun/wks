@@ -83,6 +83,7 @@ headers = {
 }
 
 for url in urls:
+    # url_original = url
     url = url.split('?')[0]
     print('Download from', url)
     url = url + '?edtMode=2'  # support vip account
@@ -91,7 +92,7 @@ for url in urls:
     req = requests.get(url, headers=headers)
     html = req.text
 
-    temp_dir = url.split('?')[0].split('/')[-1][:-5]
+    temp_dir = url.split('?')[0].split('/')[-1]
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
     os.mkdir(temp_dir)
@@ -102,9 +103,23 @@ for url in urls:
         data = json.loads(page_data.group(1))
         with open(os.path.join(temp_dir, 'pagedata.json'), 'w') as f:
             json.dump(data, f)
-        title = re.search( r'<title>(.*) - 百度文库</title>', html).group(1)
+        # title = re.search( r'<title>(.*) - 百度文库</title>', html).group(1)
+        if data['title'][-5:] == '-百度文库':
+            title = data['title'][:-5]
+        elif data['title'][-7:] == ' - 百度文库':
+            title = data['title'][:-7]
+
         # filetype = re.search(r'<div class="file-type-icon (.*)"></div>').group(1)
         filetype = data['viewBiz']['docInfo']['fileType']
+
+        if url.split('/')[3] == 'view':
+            docid = temp_dir
+            aggid = ''
+        elif url.split('/')[3] == 'aggs':
+            docid = data['readerInfo']['docId']
+            aggid = temp_dir
+
+
         if args.output:
             output = args.output
         else:
@@ -162,21 +177,26 @@ for url in urls:
         print('Found {} file, prepare for download...'.format(filetype), end='')
         jsons = {x['pageIndex']: x['pageLoadUrl'] for x in data['readerInfo']['htmlUrls']['json']}
         pngs = {x['pageIndex']: x['pageLoadUrl'] for x in data['readerInfo']['htmlUrls']['png']}
-        fonts_csss = {x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + temp_dir + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data['readerInfo']['htmlUrls']['ttf']}  # temp_dir is doc ID in wenku.baidu.com
+        fonts_csss = {x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + docid + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data['readerInfo']['htmlUrls']['ttf']}  # temp_dir is doc ID in wenku.baidu.com
         print('Success.')
 
         if data['readerInfo']['page'] > 2:
             list_pn = list(range(3, data['readerInfo']['page'] + 1, 50))
             for pn in list_pn:
-                url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=1&pn={}&t={}&isFromBdSearch=00&srcRef=&rn=50&powerId=2&bizName=mainPc".format(temp_dir, temp_dir, pn, str(int(time.time())))
+                url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=10&pn={}&t={}&isFromBdSearch=0&srcRef=&rn=50&powerId=2".format(docid, docid, pn, str(int(time.time())))
+                # aggs
+                if aggid:
+                    url += "&aggId=" + aggid
+                print(url)
                 req = requests.get(
                     url, 
                     headers=headers
                 )
-                data_temp = json.loads(req.text)['data']['htmlUrls']
-                jsons.update({x['pageIndex']: x['pageLoadUrl'] for x in data_temp['json']})
-                pngs.update({x['pageIndex']: x['pageLoadUrl'] for x in data_temp['png']})
-                fonts_csss.update({x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + temp_dir + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data_temp['ttf']})  # temp_dir is doc ID in wenku.baidu.com
+                data_temp = json.loads(req.text)['data'].get('htmlUrls')
+                if data_temp:
+                    jsons.update({x['pageIndex']: x['pageLoadUrl'] for x in data_temp['json']})
+                    pngs.update({x['pageIndex']: x['pageLoadUrl'] for x in data_temp['png']})
+                    fonts_csss.update({x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + docid + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data_temp['ttf']})  # temp_dir is doc ID in wenku.baidu.com
 
         if data['readerInfo']['page'] > len(jsons):
             print("It seems that you provided incorrect or Non-VIP cookies, only be able to download a part of the file ({} page), not the whole file ({} page).".format(len(jsons), data['readerInfo']['page']))
@@ -184,6 +204,7 @@ for url in urls:
         if args.pagenums:
             pagenums = my_tools.parse_pagenum(args.pagenums)
             pagenums = my_tools.under_by(pagenums, len(jsons))
+            pagenums = [x for x in pagenums if x <= len(jsons)]
         else:
             pagenums = list(range(1, len(jsons) + 1))
         print('page: ', my_tools.export_pagenum(pagenums))
