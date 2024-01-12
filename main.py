@@ -12,7 +12,7 @@ import img2pdf
 from PyPDF2 import PdfMerger, PdfReader
 
 from json2pdf import save_pdf  # local
-import my_tools # local
+import my_tools  # local
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -179,15 +179,16 @@ for url in urls:
         pngs = {x['pageIndex']: x['pageLoadUrl'] for x in data['readerInfo']['htmlUrls']['png']}
         fonts_csss = {x['pageIndex']: "https://wkretype.bdimg.com/retype/pipe/" + docid + "?pn=" + str(x['pageIndex']) + "&t=ttf&rn=1&v=6" + x['param'] for x in data['readerInfo']['htmlUrls']['ttf']}  # temp_dir is doc ID in wenku.baidu.com
         print('Success.')
-
         if data['readerInfo']['page'] > 2:
             list_pn = list(range(3, data['readerInfo']['page'] + 1, 50))
             for pn in list_pn:
                 url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=10&pn={}&t={}&isFromBdSearch=0&srcRef=&rn=50&powerId=2".format(docid, docid, pn, str(int(time.time())))
                 # aggs
                 if aggid:
-                    url += "&aggId=" + aggid
-                print(url)
+                    url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=1&pn={}&t={}&isFromBdSearch=0&rn=50".format(temp_dir, temp_dir, pn, str(int(time.time())))
+                else:
+                    # TODO: this url not work!
+                    url = "https://wenku.baidu.com/ndocview/readerinfo?doc_id={}&docId={}&type=html&clientType=10&pn={}&t={}&isFromBdSearch=0&srcRef=&rn=50&powerId=2".format(docid, docid, pn, str(int(time.time())))
                 req = requests.get(
                     url, 
                     headers=headers
@@ -212,6 +213,8 @@ for url in urls:
         print('Start downloading font(s)...')
         for i in range(len(pagenums)):
             percentage = (i + 1) / len(pagenums) * 100
+            if not fonts_csss.get(pagenums[i]):
+                continue
             req = requests.get(fonts_csss[pagenums[i]], headers=headers)
             # status not 200?
             temp = re.findall( r'@font-face {src: url\(data:font/opentype;base64,(.*?)\)format\(\'truetype\'\);font-family: \'(.*?)\';', req.text)
@@ -229,6 +232,8 @@ for url in urls:
         print('Start downloading json(s)...')
         for i in range(len(pagenums)):
             # TODO: theading
+            if not jsons.get(pagenums[i]):
+                continue
             req = requests.get(jsons[pagenums[i]], headers=headers)
             # status not 200?
             with open(os.path.join(temp_dir, str(pagenums[i]) + '.json'), 'w') as f:
