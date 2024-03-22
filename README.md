@@ -4,6 +4,8 @@
 
 仅支持python3
 
+*由于接口更改，目前https://wenku.baidu.com/view/xxx仅能获取到前两页，https://wenku.baidu.com/aggs/xxx可完整下载。接口变动较大，更新时间未知。*
+
 ## 郑重声明
 
 请勿将该脚本用于下载付费文档或商业用途，否则后果自负！
