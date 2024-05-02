@@ -4,7 +4,7 @@
 
 仅支持python3
 
-*由于接口更改，目前`https://wenku.baidu.com/view/xxx`仅能获取到前两页，`https://wenku.baidu.com/aggs/xxx`可完整下载。接口变动较大，更新时间未知。*
+***由于接口更改，目前`https://wenku.baidu.com/view/xxx`仅能获取到前两页，`https://wenku.baidu.com/aggs/xxx`可完整下载。接口变动较大，个人难以完成开发，故项目暂无更新计划。***
 
 ## 郑重声明
 
